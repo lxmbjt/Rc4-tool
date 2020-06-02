@@ -12,26 +12,18 @@ import javafx.scene.layout.GridPane;
 import javafx.stage.Stage;
 
 public class RC4UI extends Application {
-    final int len = 256;
-  
-    public char[] sbox;
-    public char[] key;//1~256位均可
-    public char[] tempSbox;
-    public char[] tempKey;//256位密钥
-
-
-    public static void main(String[] args) {
-        launch(args);
-    }
-
-
-    public void start(Stage primaryStage) {
-        sbox = new char[len];
-        tempSbox = new char[len];
-        key = new char[len];//1~256位均可
-        tempKey = new char[len];//256位密钥
-     
-        generateRandomKey();
+	 //public char[] key;//1~256浣嶅潎鍙�
+	public String key;
+	 final int len = 256;
+	 public static void main(String[] args) {
+	        launch(args);
+	    }
+	@Override
+	public void start(Stage primaryStage) throws Exception {
+		// TODO Auto-generated method stub
+		//key = new char[len];//1~256位均可
+		key="";
+		generateRandomKey();
 
         GridPane pane = new GridPane();
         Scene scene = new Scene(pane, 750, 350);
@@ -39,18 +31,18 @@ public class RC4UI extends Application {
         primaryStage.show();
         primaryStage.setTitle("RC4加密/解密工具");
 
-        Label leftLabel = new Label("要加/解密的内容:");
+        Label leftLabel = new Label("明文：");
         TextArea leftText = new TextArea();
-        Label rightLabel = new Label("处理后的信息:");
+        Label rightLabel = new Label("密文：");
         TextArea rightText = new TextArea();
         Button encBtn = new Button();
-        //Button decBtn=new Button();
+        Button decBtn=new Button();
 //        encBtn.setText("\n加密\n或\n解密\n");
 //        encBtn.setMinSize(50, 70);
-        encBtn.setText("加密\n解密");
-        //decBtn.setText("解密");
-        encBtn.setMinSize(50, 70);
-        //decBtn.setMinSize(50, 20);
+        encBtn.setText("加密→");
+        decBtn.setText("←解密");
+        encBtn.setMinSize(70, 20);
+        decBtn.setMinSize(70, 20);
 
         Button leftPaste = new Button();
         leftPaste.setText("粘贴到此处");
@@ -108,7 +100,7 @@ public class RC4UI extends Application {
 
 
         centerPane.add(encBtn, 0, 0);
-        //centerPane.add(decBtn, 0, 1);
+        centerPane.add(decBtn, 0, 1);
 
 
         GridPane rightPane = new GridPane();
@@ -155,13 +147,30 @@ public class RC4UI extends Application {
         encBtn.setOnAction(new EventHandler<ActionEvent>() {
             @Override
             public void handle(ActionEvent event) {
-                key = keyText.getText().toCharArray();
+                key = keyText.getText();
                 //System.out.println(key);
                 if(key!=null) {
                 generateCustomKey();
+                //String keyy="xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxACCESSKEY";
                 //System.out.println(leftText.getText());
-                rightText.setText(crypt(leftText.getText()));
+                //rightText.setText(crypt(leftText.getText()));
                 //rightText.setText(rc4(leftText.getText()));
+                rightText.setText(encrypt(leftText.getText(),key));
+                }
+            }
+        });
+        decBtn.setOnAction(new EventHandler<ActionEvent>() {
+            @Override
+            public void handle(ActionEvent event) {
+                key = keyText.getText();
+                //System.out.println(key);
+                if(key!=null) {
+               //String keyy="xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxACCESSKEY";
+                //generateCustomKey();
+                //System.out.println(leftText.getText());
+                //rightText.setText(crypt(leftText.getText()));
+                //rightText.setText(rc4(leftText.getText()));
+                leftText.setText(decrypt(rightText.getText(),key));
                 }
             }
         });
@@ -173,126 +182,156 @@ public class RC4UI extends Application {
     	String WordList = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
     	int keylen = (int)(Math.random() * 255);//随机获取密钥长度
     	int index=0;
-    	key=new char[len];
+    	key="";
+    	char[] key_char=new char[len];
         //生成密钥
         for (int i = 0; i < keylen; i++) {
         	index = (int)(Math.random() * 62);
-            key[i] = WordList.charAt(index);
+            key_char[i]= WordList.charAt(index);
         }
+        key=String.valueOf(key_char);
 //    	for (int i = 0; i < key.length; i++) {
 //            key[i] = (char) (int) (Math.random() * 1000);
 //        }
        
-        initSbox();
+    
     }
 
     void generateCustomKey() {
-        initSbox();
+     
     }
 
-    void initSbox() {
-        //初始化sbox & 256位的密钥tempKey
-        for (int i = 0; i < sbox.length; i++) {
-            sbox[i] = (char) i;
-            if(key.length!=0) {
-            tempKey[i] = key[i % key.length];}
-        }
-       
 
-        //置换sbox
-        int j = 0;
-        for (int i = 0; i < sbox.length; i++) {
-            j = (sbox[i] + tempKey[i] + j) % len;
-
-            //swap
-            char temp = sbox[i];
-            sbox[i] = sbox[j];
-            sbox[j] = temp;
-        }
-    
+/** 加密 **/
+public static String encrypt(String data, String key) {
+    if (data == null || key == null) {
+        return null;
     }
-
-    //加解密过程都是与密钥流作异或
-    String crypt(String input) {
-        String output = "";
-
-        
-        tempSbox = String.valueOf(sbox).toCharArray();
-
-        if (input == "") {
-            System.out.println("null input!");
-        } else {
-        	//生成密钥流
-            int i = 0, j = 0;
-         
-            for (int k = 0; k < input.length(); k++) {
-                i = (i + 1) % len;
-                j = (j + tempSbox[i]) % len;
-
-                //swap
-                char temp = tempSbox[i];
-                tempSbox[i] = tempSbox[j];
-                tempSbox[j] = temp;
-
-                int tempIndex = (tempSbox[i] + tempSbox[j]) % len;
-                //output +=  Integer.toHexString((char) (input.charAt(k) ^ tempSbox[tempIndex]));
-                output +=  (char) (input.charAt(k) ^ tempSbox[tempIndex]);
-            }
-            
-        }
-//            for (int k = 0; k < srtbyte.length; k++) {
-//              i = (i + 1) % len;
-//              j = (j + tempSbox[i]) % len;
-//
-//              //swap
-//              char temp = tempSbox[i];
-//              tempSbox[i] = tempSbox[j];
-//              tempSbox[j] = temp;
-//
-//              int tempIndex = (tempSbox[i] + tempSbox[j]) % len;
-//              output += (char) (srtbyte[k] ^ tempSbox[tempIndex]);
-//          }
-//        }
-        return output;
-    }
-    
-String decry(String input) {
-	String input_str="";
-	String output="";
-	if (input == "") {
-        System.out.println("null input!");
-    } else {
-    	//先将16进制转变成String
-    		 StringBuilder sb = new StringBuilder();
-    		  //49204c6f7665204a617661 split into two characters 49, 20, 4c...
-    		  for( int i=0; i<input.length()-1; i+=2 ){   	 
-    		      //grab the hex in pairs
-    		      String sub = input.substring(i, (i + 2));
-    		      //convert hex to decimal
-    		      int decimal = Integer.parseInt(sub, 16);
-    		      //convert the decimal to character
-    		      sb.append((char)decimal);
-    	 
-    		  }
-    		  input_str=sb.toString();
-    		  int i = 0, j = 0;
-           
-              for (int k = 0; k < input.length(); k++) {
-                  i = (i + 1) % len;
-                  j = (j + tempSbox[i]) % len;
-
-                  //swap
-                  char temp = tempSbox[i];
-                  tempSbox[i] = tempSbox[j];
-                  tempSbox[j] = temp;
-
-                  int tempIndex = (tempSbox[i] + tempSbox[j]) % len;
-                  output += (char) (input_str.charAt(k) ^ tempSbox[tempIndex]);
-              }
- 
-    	 }
-    
-	return output;
+    return toHexString(asString(encrypt_byte(data, key)));
 }
-    
+/** 解密 **/
+public static String decrypt(String data, String key) {
+    if (data == null || key == null) {
+        return null;
+    }
+    return new String(RC4Base(HexString2Bytes(data), key));
+}
+/** 加密字节码 **/
+public static byte[] encrypt_byte(String data, String key) {
+    if (data == null || key == null) {
+        return null;
+    }
+    byte b_data[] = data.getBytes();
+    return RC4Base(b_data, key);
+}
+private static String asString(byte[] buf) {
+    StringBuffer strbuf = new StringBuffer(buf.length);
+    for (int i = 0; i < buf.length; i++) {
+        strbuf.append((char) buf[i]);
+    }
+    return strbuf.toString();
+}
+private static byte[] initKey(String aKey) {
+    byte[] b_key = aKey.getBytes();
+    byte state[] = new byte[256];
+
+    for (int i = 0; i < 256; i++) {
+        state[i] = (byte) i;
+    }
+    int index1 = 0;
+    int index2 = 0;
+    if (b_key == null || b_key.length == 0) {
+        return null;
+    }
+    for (int i = 0; i < 256; i++) {
+        index2 = ((b_key[index1] & 0xff) + (state[i] & 0xff) + index2) & 0xff;
+        byte tmp = state[i];
+        state[i] = state[index2];
+        state[index2] = tmp;
+        index1 = (index1 + 1) % b_key.length;
+    }
+    return state;
+}
+private static String toHexString(String s) {
+    String str = "";
+    for (int i = 0; i < s.length(); i++) {
+        int ch = (int) s.charAt(i);
+        String s4 = Integer.toHexString(ch & 0xFF);
+        if (s4.length() == 1) {
+            s4 = '0' + s4;
+        }
+        str = str + s4;
+    }
+    return str;// 0x表示十六进制
+}
+private static byte[] HexString2Bytes(String src) {
+    int size = src.length();
+    byte[] ret = new byte[size / 2];
+    byte[] tmp = src.getBytes();
+    for (int i = 0; i < size / 2; i++) {
+        ret[i] = uniteBytes(tmp[i * 2], tmp[i * 2 + 1]);
+    }
+    return ret;
+}
+private static byte uniteBytes(byte src0, byte src1) {
+    char _b0 = (char) Byte.decode("0x" + new String(new byte[] { src0 })).byteValue();
+    _b0 = (char) (_b0 << 4);
+    char _b1 = (char) Byte.decode("0x" + new String(new byte[] { src1 })).byteValue();
+    byte ret = (byte) (_b0 ^ _b1);
+    return ret;
+}
+private static byte[] RC4Base(byte[] input, String mKkey) {
+    int x = 0;
+    int y = 0;
+    byte key[] = initKey(mKkey);
+    int xorIndex;
+    byte[] result = new byte[input.length];
+
+    for (int i = 0; i < input.length; i++) {
+        x = (x + 1) & 0xff;
+        y = ((key[x] & 0xff) + y) & 0xff;
+        byte tmp = key[x];
+        key[x] = key[y];
+        key[y] = tmp;
+        xorIndex = ((key[x] & 0xff) + (key[y] & 0xff)) & 0xff;
+        result[i] = (byte) (input[i] ^ key[xorIndex]);
+    }
+    return result;
+}
+/**
+ * 字符串转换成十六进制字符串
+ */
+public static String str2HexStr(String str) {
+    char[] chars = "0123456789ABCDEF".toCharArray();
+    StringBuilder sb = new StringBuilder("");
+    byte[] bs = str.getBytes();
+    int bit;
+    for (int i = 0; i < bs.length; i++) {
+        bit = (bs[i] & 0x0f0) >> 4;
+        sb.append(chars[bit]);
+        bit = bs[i] & 0x0f;
+        sb.append(chars[bit]);
+    }
+    return sb.toString();
+}
+
+/**
+ * 
+ * 十六进制转换字符串
+ * 
+ * @throws UnsupportedEncodingException
+ */
+
+public static String hexStr2Str(String hexStr) {
+    String str = "0123456789ABCDEF";
+    char[] hexs = hexStr.toCharArray();
+    byte[] bytes = new byte[hexStr.length() / 2];
+    int n;
+    for (int i = 0; i < bytes.length; i++) {
+        n = str.indexOf(hexs[2 * i]) * 16;
+        n += str.indexOf(hexs[2 * i + 1]);
+        bytes[i] = (byte) (n & 0xff);
+    }
+    return new String(bytes);
+}
 }
